@@ -124,9 +124,9 @@ def extract_role_from_payload(payload: dict) -> Optional[str]:
     Returns:
         First role from the roles list or None if no roles found
     """
-    # Auth0 Action sends roles in 'marguru.dev/roles' claim
-    if "marguru.dev/roles" in payload:
-        roles = payload["marguru.dev/roles"]
+    # Auth0 Action sends roles in 'ai-lex.dev/roles' claim
+    if "ai-lex.dev/roles" in payload:
+        roles = payload["ai-lex.dev/roles"]
         if isinstance(roles, list) and roles:
             return roles[0].lower()
     return None
@@ -142,8 +142,8 @@ def extract_email_from_payload(payload: dict) -> Optional[str]:
         User email from custom claim or standard claim
     """
     # Try custom claim first (set by Auth0 Action)
-    if "marguru.dev/email" in payload:
-        return payload["marguru.dev/email"]
+    if "ai-lex.dev/email" in payload:
+        return payload["ai-lex.dev/email"]
     
     # Fallback to standard email claim
     if "email" in payload:

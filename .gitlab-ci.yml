@@ -103,7 +103,7 @@ deploy-prod:
   script:
     - cat $KUBECONFIG_PROD_BASE64 | base64 -d > $KUBECONFIG_PATH
     - export KUBECONFIG=$KUBECONFIG_PATH
-    - kubectl config set-context --current --namespace=marguru-prod
+    - kubectl config set-context --current --namespace=ai-lex-prod
     - kubectl rollout restart deployment gateway-deployment
     - kubectl rollout restart deployment conversations-worker-deployment
     - kubectl rollout restart deployment outbound-worker-deployment

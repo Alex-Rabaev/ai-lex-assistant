@@ -191,7 +191,7 @@ success = await client.setup_webhook(
 ## Testing
 ```bash
 # Run tests
-cd /home/alex/Marguru/GitLab_main/gateway/gateway
+cd /home/...
 source venv/bin/activate
 PYTHONPATH=. pytest app/modules/connections/test_*.py -v
 ```

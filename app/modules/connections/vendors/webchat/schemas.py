@@ -39,14 +39,14 @@ class WebchatConnectionResponse(BaseModel):
                 "status": "connected",
                 "enabled": True,
                 "allow_anonymous": False,
-                "chat_url": "https://chat.marguru.dev/507f1f77bcf86cd799439010",
+                "chat_url": "https://chat.ai-lex.dev/507f1f77bcf86cd799439010",
                 "created_at": "2024-12-29T10:00:00Z",
                 "updated_at": "2024-12-29T10:00:00Z"
             }
         }
     
     @classmethod
-    def from_connection(cls, connection, chat_base_url: str = "https://chat.marguru.dev") -> "WebchatConnectionResponse":
+    def from_connection(cls, connection, chat_base_url: str = "https://chat.ai-lex.dev") -> "WebchatConnectionResponse":
         """Create response from Connection model."""
         settings = connection.settings
         return cls(

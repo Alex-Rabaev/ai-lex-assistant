@@ -77,7 +77,7 @@ class ConnectionResponse(BaseModel):
                 "status": "connected",
                 "bot_username": "@my_survey_bot",
                 "bot_first_name": "Survey Bot",
-                "webhook_url": "https://platform.marguru.com/webhook/telegram/507f1f77bcf86cd799439012",
+                "webhook_url": "https://platform.ai-lex.com/webhook/telegram/507f1f77bcf86cd799439012",
                 "last_error": None,
                 "last_checked_at": "2025-11-11T10:00:00Z",
                 "created_at": "2025-11-11T09:00:00Z",
