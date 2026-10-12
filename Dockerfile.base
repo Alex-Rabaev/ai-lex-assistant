@@ -1,0 +1,18 @@
+# Dockerfile.base
+FROM python:3.11-slim-bookworm
+
+# Обновляем систему и добавляем системные пакеты
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    libssl-dev \
+    libffi-dev \
+    build-essential \
+    curl \
+ && update-ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install the necessary dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt

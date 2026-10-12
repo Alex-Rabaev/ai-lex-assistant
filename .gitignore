@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+drafts/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+*.cover
+# Virtualenv
+.venv/
+venv/
+env/
+
+# Env files
+.env
+.env.local
+.env.langfuse
+.env.production
+.env.*
+!.env.example
+
+# Celery
+celerybeat-schedule
+celerybeat-schedule.db
+
+# Prisma / core dumps
+*.core
+*.dump
+/*.sql
+prisma/qemu_schema-engine-debian-*.core
+
+# Node
+node_modules/
+package-lock.json
+
+# VSCode
+.vscode/
+.idea/
+
+# OS / Editor garbage
+.DS_Store
+*.swp
+*.swo
+
+# Sessions
+sessions/
+*.session
+*.session-journal
+
+# Docker override files
+docker-compose copy.yml
+
+# unoficial files
+alex_docs/
+.coverage
+
+
+# AI LLM BMAD
+.cursor/
+_bmad/
+_bmad-output/
+docs/

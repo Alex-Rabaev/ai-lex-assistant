@@ -1,0 +1,127 @@
+image: docker:24
+
+services:
+  - docker:24-dind
+
+variables:
+  CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
+  CONTAINER_PROD_IMAGE: $CI_REGISTRY_IMAGE:prod
+  CONTAINER_BASE_IMAGE: registry.gitlab.com/virtual_agents/gateway/base:latest
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+  KUBECONFIG_PATH: "/tmp/kubeconfig"
+
+stages:
+  - build
+  - test
+  - release
+  # - migrate
+  - deploy
+  - base_build
+
+build:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - docker buildx create --use
+    - docker buildx inspect --bootstrap
+    - docker buildx build --platform linux/amd64,linux/arm64 -t $CONTAINER_TEST_IMAGE --push .
+  only:
+    - master
+    - prod
+
+test:
+   stage: test
+   before_script:
+     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+   script:
+     - docker pull $CONTAINER_TEST_IMAGE
+     - docker run $CONTAINER_TEST_IMAGE pytest app/ -v --tb=short 2>&1
+   only:
+     - master
+
+release-image:
+  stage: release
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - docker pull $CONTAINER_TEST_IMAGE
+    - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_RELEASE_IMAGE
+    - docker push $CONTAINER_RELEASE_IMAGE
+  only:
+    - master
+
+release-prod-image:
+  stage: release
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - docker pull $CONTAINER_TEST_IMAGE
+    - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_PROD_IMAGE
+    - docker push $CONTAINER_PROD_IMAGE
+  only:
+    - prod
+
+# migrate:
+#   stage: migrate
+#   image: dtzar/helm-kubectl:latest
+
+#   script:
+#     - cat $KUBECONFIG_BASE64 | base64 -d > $KUBECONFIG_PATH
+#     - export KUBECONFIG=$KUBECONFIG_PATH
+#     - kubectl delete job gateway-db-migration --ignore-not-found
+#     - kubectl apply -f k8s/gateway-migration-job.yaml
+#     - kubectl wait --for=condition=complete job/gateway-db-migration --timeout=120s
+
+#   only:
+#     - master
+
+deploy:
+  stage: deploy
+  image: dtzar/helm-kubectl:latest
+  script:
+    - cat $KUBECONFIG_BASE64 | base64 -d > $KUBECONFIG_PATH
+    - export KUBECONFIG=$KUBECONFIG_PATH
+    - kubectl rollout restart deployment gateway-deployment
+    - kubectl rollout restart deployment conversations-worker-deployment
+    - kubectl rollout restart deployment outbound-worker-deployment
+    - kubectl rollout restart deployment websocket-deployment
+    - kubectl rollout restart deployment temporal-worker-deployment
+  only:
+    - master
+
+deploy-prod:
+  stage: deploy
+  image: dtzar/helm-kubectl:latest
+  variables:
+    KUBECONFIG_PATH: "/tmp/prod_kubeconfig"
+  script:
+    - cat $KUBECONFIG_PROD_BASE64 | base64 -d > $KUBECONFIG_PATH
+    - export KUBECONFIG=$KUBECONFIG_PATH
+    - kubectl config set-context --current --namespace=marguru-prod
+    - kubectl rollout restart deployment gateway-deployment
+    - kubectl rollout restart deployment conversations-worker-deployment
+    - kubectl rollout restart deployment outbound-worker-deployment
+    - kubectl rollout restart deployment websocket-deployment
+    - kubectl rollout restart deployment temporal-worker-deployment
+  only:
+    - prod
+
+base_build:
+  stage: base_build
+  image: docker:24
+  services:
+    - docker:24-dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - docker buildx create --use
+    - docker buildx inspect --bootstrap
+    - docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile.base -t $CONTAINER_BASE_IMAGE --push .
+  only:
+    - base_build

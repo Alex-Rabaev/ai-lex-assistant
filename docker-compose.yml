@@ -1,0 +1,96 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: python_project_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:latest
+    container_name: python_project_redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: python_project_rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: myuser
+      RABBITMQ_DEFAULT_PASS: mypassword
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      default:
+        aliases:
+          - rabbitmq
+
+  whatsapp_bot:
+    build: .
+    container_name: python_project_whatsapp_bot
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    volumes:
+      - .:/app
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env.development
+    command: uvicorn app.whatsapp.bot.bot:app --reload --loop asyncio --port 8001
+
+  app:
+    build: .
+    container_name: python_project_app
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.development
+    command: sh -c "prisma generate && python3 -m prisma migrate deploy && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
+
+  celery_worker:
+    build: .
+    container_name: python_project_celery_worker
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    volumes:
+      - .:/app
+    env_file:
+      - .env.development
+    command: celery -A app.celery_app worker --pool=solo --loglevel=info
+
+  celery_beat:
+    build: .
+    container_name: python_project_celery_beat
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    volumes:
+      - .:/app
+    env_file:
+      - .env.development
+    command: celery -A app.celery_app beat --loglevel=info
+
+volumes:
+  postgres_data:
